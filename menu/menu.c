@@ -42,7 +42,7 @@
 #include "nvram.h"
 #include "tasks.h"
 
-int globalFtlHasBeenRestored; /**< int global variable to tell wether a ftl_restore has been done. */
+extern int globalFtlHasBeenRestored; /**< int global variable to tell wether a ftl_restore has been done. */
 
 static TaskDescriptor menu_task; /**< TaskDescriptor Menu task */
 

@@ -25,6 +25,12 @@
 #include "arm/arm.h"
 #include "util.h"
 
+uint16_t** LwVM_chunks;
+uint32_t LwVM_numValidChunks;
+uint32_t LwVM_rangeShiftValue;
+uint32_t LwVM_rangeByteCount;
+uint64_t LwVM_seek;
+
 static int bdev_init_done = 0;
 static LinkedList bdev_list;
 
