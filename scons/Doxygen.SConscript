@@ -24,7 +24,9 @@ import os.path
 import glob
 from fnmatch import fnmatch
 
-def DoxyfileParse(file_contents):
+def DoxyfileParse(file_contents2):
+   file_contents = file_contents2.decode('utf-8')
+
    """
    Parse a Doxygen source file and return a dictionary of all the values.
    Values will be strings and lists of strings.
@@ -78,7 +80,8 @@ def DoxyfileParse(file_contents):
          append_data( data, key, new_data, '\\' )
 
    # compress lists of len 1 into single strings
-   for k, v in data.items():
+   for k in list(data.keys()):
+      v = data[k]
       if len(v) == 0:
          data.pop(k)
 
