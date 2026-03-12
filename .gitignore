@@ -10,3 +10,6 @@ iBSS.*
 *.o
 .oibc-history
 doxygen/*
+keep/*
+test.elf
+
