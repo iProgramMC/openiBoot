@@ -1,6 +1,7 @@
 iDroid Project openiBoot
 ---------------------------------------------------
 	Copyright (C) 2008 David Wang (planetbeing).
+	Copyright (C) 2026 iProgramInCpp.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +17,22 @@ iDroid Project openiBoot
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 NOTE: Version 0.3 and above will not boot iDroid 2.6.32 series kernels without additional parameters being passed to the kernel.
+
+Compiling In 2026
+---------------------------------------------------
+iProgramInCpp here.
+
+I have struggled to get this thing compiling (and working) for a *while*. No, fixing all the compiler
+errors and using `arm-none-eabi-gcc` does NOT work. I have to use the ancient toolchain which you
+can still find at https://github.com/iDroid-Project/OpeniBoot-toolchain.
+
+Personally I have used **Debian 8.7.0 Jessie** to compile the toolchain, then used the new toolchain
+to compile this project. You will need to update the sources, because the default ones will not work,
+since Debian 8 is such an old version.
+
+Once you manage to install Debian 8.7.0, and dependencies including `git`, `libreadline-dev`,
+`libusb-1.0-0-dev`, `libusbmuxd`, `usbmuxd`, `python2.7-dev`, `scons`, and more, you *should* be able
+to just compile the toolchain and then this project.
 
 Warning
 ---------------------------------------------------
