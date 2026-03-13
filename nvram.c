@@ -99,6 +99,12 @@ static NVRamAtom* readAtoms(uint8_t* bankData) {
 	NVRamAtom* firstAtom = NULL;
 	size_t position = 0;
 	while(position < NVRAM_SIZE) {
+		NVRamInfo* info = (NVRamInfo*) &bankData[position];
+		if (info->size == 0) {
+			bufferPrintf("detected end of list.\n");
+			break;
+		}
+		
 		if(lastAtom == NULL) {
 			firstAtom = (NVRamAtom*) malloc(sizeof(NVRamAtom));
 			lastAtom = firstAtom;
@@ -107,14 +113,28 @@ static NVRamAtom* readAtoms(uint8_t* bankData) {
 			lastAtom = lastAtom->next;
 		}
 
-		lastAtom->info = (NVRamInfo*) &bankData[position];
-		lastAtom->size = lastAtom->info->size << 4;
+		lastAtom->info = info;
+		lastAtom->size = info->size << 4;
 		lastAtom->data = &bankData[position + sizeof(NVRamInfo)];
 		lastAtom->next = NULL;
-
+	/*
+		// Dump Information About This NVRAM Header (what generate_nor calls chrp_nvram_header)
+		char type[13];
+		type[12] = 0;
+		memcpy(type, info->type, sizeof(info->type));
+		bufferPrintf("chrp_info->ckByteSeed (sig)  : 0x%x\n", info->ckByteSeed);
+		bufferPrintf("chrp_info->ckByte     (cksum): 0x%x\n", info->ckByte);
+		bufferPrintf("chrp_info->size       (len)  : 0x%x\n", info->size);
+		bufferPrintf("chrp_info ACTUAL length      : 0x%x\n", info->size << 4);
+		bufferPrintf("chrp_info->type       (name) : '%s'\n", type);
+		
+		NVRamData* data = (NVRamData*) &info[1];
+		bufferPrintf("appl_info->adler = 0x%x\n", data->adler);
+		bufferPrintf("appl_info->epoch = 0x%x\n", data->epoch);
+	*/
 		position += lastAtom->size;
 
-		if(checkNVRamInfo(lastAtom->info) != lastAtom->info->ckByte) {
+		if(checkNVRamInfo(lastAtom->info) != info->ckByte) {
 			releaseAtoms(firstAtom);
 			return NULL;
 		}
