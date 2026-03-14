@@ -117,7 +117,7 @@ static NVRamAtom* readAtoms(uint8_t* bankData) {
 		lastAtom->size = info->size << 4;
 		lastAtom->data = &bankData[position + sizeof(NVRamInfo)];
 		lastAtom->next = NULL;
-	/*
+	
 		// Dump Information About This NVRAM Header (what generate_nor calls chrp_nvram_header)
 		char type[13];
 		type[12] = 0;
@@ -131,7 +131,7 @@ static NVRamAtom* readAtoms(uint8_t* bankData) {
 		NVRamData* data = (NVRamData*) &info[1];
 		bufferPrintf("appl_info->adler = 0x%x\n", data->adler);
 		bufferPrintf("appl_info->epoch = 0x%x\n", data->epoch);
-	*/
+	
 		position += lastAtom->size;
 
 		if(checkNVRamInfo(lastAtom->info) != info->ckByte) {

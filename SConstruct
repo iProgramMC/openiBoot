@@ -23,7 +23,7 @@ henv.SConscript(['scons/Doxygen.SConscript'])
 env = ARMEnvironment()
 env.Append(CPPDEFINES=[
 	'OPENIBOOT_VERSION='+version,
-	'OPENIBOOT_VERSION_BUILD='+GetGitCommit(),
+	'OPENIBOOT_VERSION_BUILD='+GetGitCommit().decode('utf-8').strip(),
 	])
 env.Append(CPPFLAGS = ['-Wall', '-Werror', '-O2', '-Ttext=0x0'])
 Export('env')
@@ -60,11 +60,11 @@ base_src = env.Localize([
 	'tasks.c',
 	'util.c',
 	'aes_wrap.c',
-    'iprogramincpp/load_elf.c',
-    'iprogramincpp/rtl/assert.c',
-    'iprogramincpp/rtl/elf.c',
-    'iprogramincpp/rtl/print.c',
-    'iprogramincpp/rtl/status.c',
+	'iprogramincpp/load_elf.c',
+	'iprogramincpp/rtl/assert.c',
+	'iprogramincpp/rtl/elf.c',
+	'iprogramincpp/rtl/print.c',
+	'iprogramincpp/rtl/status.c',
 	])
 Export('base_src')
 
