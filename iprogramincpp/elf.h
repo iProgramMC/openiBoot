@@ -17,7 +17,7 @@ Author:
 
 #include "main.h"
 
-typedef /*NO_RETURN*/ void(*ELF_ENTRY_POINT)();
+typedef /*NO_RETURN*/ void(*ELF_ENTRY_POINT)(void* Parameter0);
 
 enum
 {

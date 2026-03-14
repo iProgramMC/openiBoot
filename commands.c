@@ -215,8 +215,3 @@ static error_t cmd_version(int argc, char** argv)
 	return SUCCESS;
 }
 COMMAND("version", "display the version string", cmd_version);
-
-// ADDED by iProgramInCpp
-error_t cmd_loadelf(int argc, char** argv);
-COMMAND("le", "loads an ELF file from 0x09000000", cmd_loadelf);
-

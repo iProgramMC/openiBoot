@@ -5,6 +5,11 @@
 #include "timer.h"
 #include "util.h"
 
+#include "commands.h"
+#include "tasks.h"
+#include "util.h"
+#include "arm/arm.h"
+
 const UARTRegisters HWUarts[] = {
 	{UART + UART0 + UART_ULCON, UART + UART0 + UART_UCON, UART + UART0 + UART_UFCON, 0,
 		UART + UART0 + UART_UTRSTAT, UART + UART0 + UART_UERSTAT, UART + UART0 + UART_UFSTAT,
@@ -40,6 +45,8 @@ void uart_printf_handler(const char *_text)
 	if(prev_printf_handler)
 		prev_printf_handler(_text);
 }
+
+void uart_setup_command();
 
 int uart_setup() {
 	int i;
@@ -93,6 +100,9 @@ int uart_setup() {
 	uart_set_mode(0, UART_POLL_MODE);
 	prev_printf_handler = addPrintfHandler(uart_printf_handler);
 	UartHasInit = TRUE;
+
+	// Run a new task for handling UART commands (from UART0) -- BACKPORTED from plat-a4!!
+	uart_setup_command();
 
 	return 0;
 }
@@ -284,4 +294,53 @@ int uart_read(int ureg, char *buffer, uint32_t length, uint64_t timeout) {
 	}
 
 	return written;
+}
+
+uint32_t UartCommandBufferSize = 256;
+char* UartCommandBuffer;
+uint32_t UartCommandBufferRead = 0;
+
+void uart_run(uint32_t _V) {
+	while(1) {
+		uint32_t read = uart_read(_V, UartCommandBuffer+UartCommandBufferRead, UartCommandBufferSize-UartCommandBufferRead, 10000);
+		UartCommandBufferRead += read;
+		int i;
+		for (i = 0; i < strlen(UartCommandBuffer); i++) {
+			if (UartCommandBuffer[i] == '\n' || UartCommandBuffer[i] == '\r') {
+				EnterCriticalSection();
+				char *safeCommand = malloc(i+1);
+				memset(safeCommand, 0, sizeof(safeCommand));
+				memcpy(safeCommand, UartCommandBuffer, i);
+				memset(UartCommandBuffer, 0, UartCommandBufferSize);
+				UartCommandBufferRead = 0;
+				LeaveCriticalSection();
+				int argc;
+				char** argv = command_parse(safeCommand, &argc);
+				bufferPrintf("UART: Starting %s\n", safeCommand);
+				if(command_run(argc, argv) == 0)
+					bufferPrintf("UART: Done: %s\n", safeCommand);
+				else
+					bufferPrintf("UART: Unknown command: %s\n", safeCommand);
+				break;
+			}
+		}
+		EnterCriticalSection();
+		if (strlen(UartCommandBuffer) == UartCommandBufferSize) {
+			memset(UartCommandBuffer, 0, UartCommandBufferSize);
+			UartCommandBufferRead = 0;
+		}
+		LeaveCriticalSection();
+		task_sleep(500);
+	}
+}
+
+static TaskDescriptor uart_task;
+
+void uart_setup_command()
+{
+	UartCommandBuffer = malloc(UartCommandBufferSize);
+	memset(UartCommandBuffer, 0, UartCommandBufferSize);
+
+	task_init(&uart_task, "uart reader", TASK_DEFAULT_STACK_SIZE);
+	task_start(&uart_task, &uart_run, 0);
 }
