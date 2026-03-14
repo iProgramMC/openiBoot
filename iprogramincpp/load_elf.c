@@ -62,8 +62,8 @@ BSTATUS BlLoadElfFile(uint8_t* ElfFile, ELF_ENTRY_POINT* EntryPointOut, uintptr_
 			memcpy((void*) phdr->PhysicalAddress, ElfFile + phdr->Offset, phdr->SizeInFile);
 	}
 	
-	DbgPrint("All the program headers have been loaded.");
 	*EntryPointOut = header->EntryPoint;
+	DbgPrint("All the program headers have been loaded.  EntryPoint: %p", header->EntryPoint);
 	return STATUS_SUCCESS;
 }
 
@@ -217,14 +217,14 @@ error_t cmd_loadelf(int argc, char** argv)
 	uintptr_t KernelMinAddress, KernelMaxAddress;
 	
 	BSTATUS Status = BlLoadElfFile(ElfFile, &EntryPoint, &KernelMinAddress, &KernelMaxAddress);
-	if (FAILED(Status)) {
+	if (BFAILED(Status)) {
 		DbgPrint("Loading ELF failed: %s", RtlGetStatusString(Status));
 		return EINVAL;
 	}
 	
 	BlSetupLoaderParameterBlock(KernelMinAddress, KernelMaxAddress);
 	
-	DbgPrint("Okay, entering kernel...");
+	DbgPrint("Okay, entering kernel...  Entry Point is at %p.", EntryPoint);
 	EnterCriticalSection();
 	
 	// bye bye OpeniBoot
