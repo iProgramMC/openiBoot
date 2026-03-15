@@ -60,7 +60,7 @@ base_src = env.Localize([
 	'tasks.c',
 	'util.c',
 	'aes_wrap.c',
-	'iprogramincpp/load_elf.c',
+	'iprogramincpp/boron_loader.c',
 	'iprogramincpp/rtl/assert.c',
 	'iprogramincpp/rtl/elf.c',
 	'iprogramincpp/rtl/print.c',
