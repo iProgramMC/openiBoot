@@ -609,3 +609,27 @@ error_t cmd_boron_ke(int argc, char** argv)
 }
 
 COMMAND("boronke", "[boron loader] sets the kernel file name", cmd_boron_ke);
+
+#ifdef CONFIG_IPOD_TOUCH_1G
+
+// module to auto-boot on emulator
+static void boron_autoboot_check()
+{
+	uint32_t* checkPtr = (uint32_t*) (OSImageBaseAddress - 4);
+	
+	// my fork of the iPod touch 1G emulator (https://github.com/iProgramMC/qemu-ios)
+	// puts this sentinel value here to initiate the auto-boot process
+	if (*checkPtr == 0x4E524241)
+	{
+		bufferPrintf("Auto-booting Boron ...\n");
+		cmd_boron_go(0, NULL);
+	}
+	else
+	{
+		bufferPrintf("Not trying to auto-boot, either real hardware or not set up right\n");
+	}
+}
+
+MODULE_INIT_BOOT(boron_autoboot_check);
+
+#endif
