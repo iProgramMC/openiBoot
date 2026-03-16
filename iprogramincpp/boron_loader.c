@@ -30,6 +30,8 @@
 
 #include "lcd.h"
 #include "arm/arm.h"
+#include "mmu.h"
+#include "wdt.h"
 
 #include "rtl/elf.h"
 #include "lpb.h"
@@ -537,7 +539,13 @@ error_t cmd_boron_go(int argc, char** argv)
 	// ---- Jump To Kernel ----
 	DbgPrint("Jumping to kernel now ...  Entry point: %p", KernelEntryPoint);
 	
+	// copy of chainload
 	EnterCriticalSection();
+#ifndef MALLOC_NO_WDT
+	wdt_disable();
+#endif
+	arm_disable_caches();
+	mmu_disable();
 	KernelEntryPoint(&BlParameterBlock);
 	
 	DbgPrint("Unexpected return to bootloader, sorry, we don't support this.");
