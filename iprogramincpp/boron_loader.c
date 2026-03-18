@@ -44,7 +44,7 @@
 // The emulator can't send files through ACM so what I made it do is just dump the file
 // directly into memory.  Since I'm lazy, I don't feel like transmitting it a size (yet)
 // so this is what it is.  Raise if you need to.
-#define DEFAULT_OS_IMAGE_SIZE 4097152
+#define DEFAULT_OS_IMAGE_SIZE 8*1024*1024
 
 static uint32_t OSImageBaseAddress = 0x09000000;
 
@@ -325,11 +325,14 @@ BSTATUS BlLoadElfFile(uint8_t* ElfFile, ELF_ENTRY_POINT* EntryPointOut, uintptr_
 		
 		DbgPrint("loading phdr. PAddr: %p, SIF: %u, SIM: %u", phdr->PhysicalAddress, phdr->SizeInFile, phdr->SizeInMemory);
 		
-		if (*KernelMinAddress > phdr->PhysicalAddress)
-			*KernelMinAddress = phdr->PhysicalAddress;
+		uintptr_t LowerBound = phdr->PhysicalAddress & ~(PAGE_SIZE - 1);
+		uintptr_t UpperBound = (phdr->PhysicalAddress + phdr->SizeInMemory + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		
-		if (*KernelMaxAddress < phdr->PhysicalAddress + phdr->SizeInMemory)
-			*KernelMaxAddress = phdr->PhysicalAddress + phdr->SizeInMemory;
+		if (*KernelMinAddress > LowerBound)
+			*KernelMinAddress = LowerBound;
+		
+		if (*KernelMaxAddress < UpperBound)
+			*KernelMaxAddress = UpperBound;
 		
 		memset((void*) phdr->PhysicalAddress, 0, phdr->SizeInMemory);
 		
@@ -438,6 +441,8 @@ static void* BlScanOSImageForFile(
 	return NULL;
 }
 
+static uintptr_t OSNextModuleAddress;
+
 static void BlAddKernelModule(const char* ModuleName, void* ModuleData, size_t ModuleSize)
 {
 	PLOADER_PARAMETER_BLOCK Lpb = &BlParameterBlock;
@@ -448,13 +453,19 @@ static void BlAddKernelModule(const char* ModuleName, void* ModuleData, size_t M
 		return;
 	}
 	
+	// We need to allocate a space that's page aligned for this.
+	void* ModuleDataNew = (void*) OSNextModuleAddress;
+	OSNextModuleAddress = (OSNextModuleAddress + ModuleSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+	memset(ModuleDataNew, 0, (ModuleSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
+	memcpy(ModuleDataNew, ModuleData, ModuleSize);
+	
 	// We only need to add it to this list.  The range should already be excluded
 	// from the memory map by excluding the OS image.
 	
 	PLOADER_MODULE Module = &BlKernelModules[Lpb->ModuleInfo.Count++];
 	Module->Path    = (char*) ModuleName;
 	Module->String  = BlankString;
-	Module->Address = ModuleData;
+	Module->Address = ModuleDataNew;
 	Module->Size    = ModuleSize;
 }
 
@@ -462,6 +473,8 @@ error_t cmd_boron_go(int argc, char** argv)
 {
 	void* OSImage = (void*) OSImageBaseAddress;
 	size_t OSImageSize = BlGetOSImageSize();
+	
+	OSNextModuleAddress = (uintptr_t) OSImage + OSImageSize;
 	
 	// ---- Load Kernel ----
 	void* KernelData = NULL;
