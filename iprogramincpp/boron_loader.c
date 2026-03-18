@@ -27,6 +27,7 @@
 #include "openiboot.h"
 #include "commands.h"
 #include "util.h"
+#include "tasks.h"
 
 #include "lcd.h"
 #include "arm/arm.h"
@@ -459,6 +460,8 @@ static void BlAddKernelModule(const char* ModuleName, void* ModuleData, size_t M
 	memset(ModuleDataNew, 0, (ModuleSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 	memcpy(ModuleDataNew, ModuleData, ModuleSize);
 	
+	DbgPrint("ModuleName: %s  ModuleDataNew: %p", ModuleName, ModuleDataNew);
+	
 	// We only need to add it to this list.  The range should already be excluded
 	// from the memory map by excluding the OS image.
 	
@@ -474,7 +477,7 @@ error_t cmd_boron_go(int argc, char** argv)
 	void* OSImage = (void*) OSImageBaseAddress;
 	size_t OSImageSize = BlGetOSImageSize();
 	
-	OSNextModuleAddress = (uintptr_t) OSImage + OSImageSize;
+	OSNextModuleAddress = ((uintptr_t) OSImage + OSImageSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 	
 	// ---- Load Kernel ----
 	void* KernelData = NULL;
@@ -547,6 +550,12 @@ error_t cmd_boron_go(int argc, char** argv)
 		
 		DbgPrint("Using module '%s' from address %p, size %u.", FileName, Data, FileSize);
 		BlAddKernelModule(FileName, Data, FileSize);
+	}
+	
+	if (BlGetOSImageSize() != DEFAULT_OS_IMAGE_SIZE)
+	{
+		DbgPrint("Waiting 2 seconds for USB ACM buffers to flush...");
+		task_sleep(2000);
 	}
 	
 	// ---- Jump To Kernel ----
