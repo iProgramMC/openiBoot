@@ -51,7 +51,7 @@ static uint32_t OSImageBaseAddress = 0x09000000;
 
 static char OSImageHalPath[64] = "halipod1,1.sys";
 static char OSImageKernelPath[64] = "kernel.elf";
-static char OSImageCommandLine[512] = "Root=/initrd.tar Init=/bin/init.exe InitArguments=\"--config /etc/boroninit.cfg\" NoInit=yes";
+static char OSImageCommandLine[512] = "Root=/initrd.tar Init=/bin/init.exe InitArguments=\"--config /etc/boroninit.cfg\"";// "NoInit=yes";
 
 static char OpenIBootName[] = "OpeniBoot";
 static char OpenIBootVersion[] = OPENIBOOT_VERSION_STR;
@@ -206,7 +206,7 @@ void BlSetupLoaderParameterBlock(
 	#error Specify the amount of memory you have!
 #endif
 
-#if !(defined CONFIG_IPOD_TOUCH_1G)
+#if !(defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPHONE_3G)
 	#warning This config is untested!
 #endif
 
