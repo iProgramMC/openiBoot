@@ -1,4 +1,3 @@
-//
 //  This is iProgramInCpp's implementation of the Boron OS loader for OpeniBoot.
 //
 //  It takes in a TAR file located at 0x09000000, extracts all the contents into modules,
@@ -28,6 +27,7 @@
 #include "commands.h"
 #include "util.h"
 #include "tasks.h"
+#include "framebuffer.h"
 
 #include "lcd.h"
 #include "arm/arm.h"
@@ -49,9 +49,20 @@
 
 static uint32_t OSImageBaseAddress = 0x09000000;
 
-static char OSImageHalPath[64] = "halipod1,1.sys";
+#if defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPHONE_2G || CONFIG_IPHONE_3G
+static char OSImageHalPath[64] = "hals5l8900.sys";
+#elif defined CONFIG_IPOD_TOUCH_2G
+static char OSImageHalPath[64] = "hals5l8720.sys";
+#elif defined CONFIG_IPHONE_3GS
+static char OSImageHalPath[64] = "hals5l8920.sys";
+#elif defined CONFIG_IPAD_1G
+static char OSImageHalPath[64] = "hals5l8940x.sys";
+#else
+#error Unsupported config!
+#endif
+
 static char OSImageKernelPath[64] = "kernel.elf";
-static char OSImageCommandLine[512] = "Root=/initrd.tar Init=/bin/init.exe InitArguments=\"--config /etc/boroninit.cfg\"";// "NoInit=yes";
+static char OSImageCommandLine[512] = "Root=/initrd.tar Init=/bin/init.exe InitArguments=\"--config /etc/boroninit.cfg\" NoInit=yes";
 
 static char OpenIBootName[] = "OpeniBoot";
 static char OpenIBootVersion[] = OPENIBOOT_VERSION_STR;
@@ -207,7 +218,7 @@ void BlSetupLoaderParameterBlock(
 #endif
 
 #if !(defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPHONE_3G)
-	#warning This config is untested!
+	//#warning This config is untested!
 #endif
 
 	BlAddAreaToMemMap(0x00000000, MainMemorySize, LOADER_MEM_FREE);
@@ -224,6 +235,8 @@ void BlSetupLoaderParameterBlock(
 	Fb->Width = window->framebuffer.width;
 	Fb->Height = window->framebuffer.height;
 	Fb->IsPhysicalAddress = true;
+	
+	DbgPrint("framebuffer: %p, %dx%d", Fb->Address, Fb->Width, Fb->Height);
 	
 	switch (window->framebuffer.colorSpace)
 	{
@@ -474,6 +487,12 @@ static void BlAddKernelModule(const char* ModuleName, void* ModuleData, size_t M
 
 error_t cmd_boron_go(int argc, char** argv)
 {
+#ifdef CONFIG_IPOD_TOUCH_2G
+	framebuffer_clear();
+	framebuffer_setloc(0, 0);
+	framebuffer_print_force("Please wait...\n");
+#endif
+	
 	void* OSImage = (void*) OSImageBaseAddress;
 	size_t OSImageSize = BlGetOSImageSize();
 	
@@ -552,11 +571,13 @@ error_t cmd_boron_go(int argc, char** argv)
 		BlAddKernelModule(FileName, Data, FileSize);
 	}
 	
+#ifdef CONFIG_IPOD_TOUCH_1G
 	if (BlGetOSImageSize() != DEFAULT_OS_IMAGE_SIZE)
 	{
 		DbgPrint("Waiting 2 seconds for USB ACM buffers to flush...");
 		task_sleep(2000);
 	}
+#endif
 	
 	// ---- Jump To Kernel ----
 	DbgPrint("Jumping to kernel now ...  Entry point: %p", KernelEntryPoint);

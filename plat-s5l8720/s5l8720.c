@@ -54,8 +54,8 @@ void iboot_loader_run(void) {
 	static int count = 0;
 	while(1) {
 		if (!gpio_pin_state(BUTTONS_VOLUP) || (count == countTime && !buttonPressed)) {
-			load_iboot();
-			task_stop();
+			//load_iboot();
+			//task_stop();
 		}
 		if (gpio_pin_state(BUTTONS_HOLD) && buttonPressed == FALSE) {
 			buttonPressed = TRUE;
@@ -75,7 +75,7 @@ void iboot_loader_run(void) {
 		if (has_elapsed(startTime, count * 1000 * 1000) && !buttonPressed) {
 			count++;
 			if (count >= 2) {
-				bufferPrintf("%d seconds until automatic boot\r\n", countTime - count);
+				//bufferPrintf("%d seconds until automatic boot\r\n", countTime - count);
 			}
 		}
 		task_yield();
