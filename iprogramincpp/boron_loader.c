@@ -55,8 +55,8 @@ static char OSImageHalPath[64] = "hals5l8900.sys";
 static char OSImageHalPath[64] = "hals5l8720.sys";
 #elif defined CONFIG_IPHONE_3GS
 static char OSImageHalPath[64] = "hals5l8920.sys";
-#elif defined CONFIG_IPAD_1G
-static char OSImageHalPath[64] = "hals5l8940x.sys";
+#elif defined CONFIG_IPAD_1G || defined CONFIG_IPHONE_4 || defined CONFIG_IPOD_TOUCH_4G
+static char OSImageHalPath[64] = "hals5l8940.sys";
 #else
 #error Unsupported config!
 #endif
@@ -209,7 +209,7 @@ void BlSetupLoaderParameterBlock(
 	// Set up region covering the rest of main memory.
 #if defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPHONE_2G || CONFIG_IPHONE_3G || CONFIG_IPOD_TOUCH_2G
 	const uintptr_t MainMemorySize = 0x08000000; // 128 MB
-#elif defined CONFIG_IPHONE_3GS || defined CONFIG_IPAD_1G || defined CONFIG_IPOD_TOUCH_3G
+#elif defined CONFIG_IPHONE_3GS || defined CONFIG_IPAD_1G || defined CONFIG_IPOD_TOUCH_3G || defined CONFIG_IPOD_TOUCH_4G
 	const uintptr_t MainMemorySize = 0x10000000; // 256 MB
 #elif defined CONFIG_IPHONE_4
 	const uintptr_t MainMemorySize = 0x20000000; // 512 MB
@@ -303,6 +303,29 @@ void BlSetupLoaderParameterBlock(
 	// ----- Loader Info Setup -----
 	Lpb->LoaderInfo.Name = OpenIBootName;
 	Lpb->LoaderInfo.Version = OpenIBootVersion;
+	
+	// ----- Hardware Identifier Setup -----
+#ifdef CONFIG_IPHONE_2G
+	strcpy(Lpb->HardwareIdentifier, "m68ap");
+#elif defined CONFIG_IPHONE_3G
+	strcpy(Lpb->HardwareIdentifier, "n82ap");
+#elif defined CONFIG_IPHONE_3GS
+	strcpy(Lpb->HardwareIdentifier, "n88ap");
+#elif defined CONFIG_IPHONE_4
+	strcpy(Lpb->HardwareIdentifier, "n90ap");
+#elif defined CONFIG_IPAD_1G
+	strcpy(Lpb->HardwareIdentifier, "k48ap");
+#elif defined CONFIG_IPOD_TOUCH_1G
+	strcpy(Lpb->HardwareIdentifier, "n45ap");
+#elif defined CONFIG_IPOD_TOUCH_2G
+	strcpy(Lpb->HardwareIdentifier, "n72ap");
+#elif defined CONFIG_IPOD_TOUCH_3G
+	strcpy(Lpb->HardwareIdentifier, "n18ap");
+#elif defined CONFIG_IPOD_TOUCH_4G
+	strcpy(Lpb->HardwareIdentifier, "n81ap");
+#else
+	#error Define Lpb->HardwareIdentifier!
+#endif
 }
 
 BSTATUS BlLoadElfFile(uint8_t* ElfFile, ELF_ENTRY_POINT* EntryPointOut, uintptr_t* KernelMinAddress, uintptr_t* KernelMaxAddress)

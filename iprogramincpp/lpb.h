@@ -102,6 +102,8 @@ typedef struct
 	
 	const char* CommandLine;
 	
+	char HardwareIdentifier[16];
+	
 #if 0
 	// device trees are unused for now but they can be used
 	void* DeviceTreeBlobAddress;
