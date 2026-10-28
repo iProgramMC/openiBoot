@@ -61,6 +61,16 @@ static char OSImageHalPath[64] = "hals5l8940.sys";
 #error Unsupported config!
 #endif
 
+#if defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPHONE_2G || CONFIG_IPHONE_3G || CONFIG_IPOD_TOUCH_2G
+const uintptr_t MainMemorySize = 0x08000000; // 128 MB
+#elif defined CONFIG_IPHONE_3GS || defined CONFIG_IPAD_1G || defined CONFIG_IPOD_TOUCH_3G || defined CONFIG_IPOD_TOUCH_4G
+const uintptr_t MainMemorySize = 0x10000000; // 256 MB
+#elif defined CONFIG_IPHONE_4
+const uintptr_t MainMemorySize = 0x20000000; // 512 MB
+#else
+#error Specify the amount of memory you have!
+#endif
+
 static char OSImageKernelPath[64] = "kernel.elf";
 static char OSImageCommandLine[512] = "Root=/initrd.tar Init=/bin/init.exe InitArguments=\"--config /etc/boroninit.cfg\" NoInit=yes";
 
@@ -207,15 +217,6 @@ void BlSetupLoaderParameterBlock(
 	DbgPrint("Kernel: %p-%p    OpeniBoot: %p-%p", KernelMinAddress, KernelMaxAddress, OIBMinAddress, OIBMaxAddress);
 	
 	// Set up region covering the rest of main memory.
-#if defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPHONE_2G || CONFIG_IPHONE_3G || CONFIG_IPOD_TOUCH_2G
-	const uintptr_t MainMemorySize = 0x08000000; // 128 MB
-#elif defined CONFIG_IPHONE_3GS || defined CONFIG_IPAD_1G || defined CONFIG_IPOD_TOUCH_3G || defined CONFIG_IPOD_TOUCH_4G
-	const uintptr_t MainMemorySize = 0x10000000; // 256 MB
-#elif defined CONFIG_IPHONE_4
-	const uintptr_t MainMemorySize = 0x20000000; // 512 MB
-#else
-	#error Specify the amount of memory you have!
-#endif
 
 #if !(defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPHONE_3G)
 	//#warning This config is untested!
@@ -498,14 +499,21 @@ static void BlAddKernelModule(const char* ModuleName, void* ModuleData, size_t M
 	
 	DbgPrint("ModuleName: %s  ModuleDataNew: %p", ModuleName, ModuleDataNew);
 	
-	// We only need to add it to this list.  The range should already be excluded
-	// from the memory map by excluding the OS image.
-	
 	PLOADER_MODULE Module = &BlKernelModules[Lpb->ModuleInfo.Count++];
 	Module->Path    = (char*) ModuleName;
 	Module->String  = BlankString;
 	Module->Address = ModuleDataNew;
 	Module->Size    = ModuleSize;
+	
+	uintptr_t ActualAddr = (uintptr_t) ModuleDataNew;
+	size_t ActualSize = (ModuleSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+
+	if (MainMemorySize < 0x10000000) {
+		// Make sure it's in the lower mirror as that's where we need to run from
+		ActualAddr &= 0x07FFFFFF;
+	}
+	
+	BlRemoveAreaFromMemMap(ActualAddr, ActualSize, LOADER_MEM_LOADED_PROGRAM);
 }
 
 error_t cmd_boron_go(int argc, char** argv)
