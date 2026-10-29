@@ -63,6 +63,8 @@ plat_s5l8720_src = arch_arm_src + env.Localize([
 	'#iprogramincpp/rtl/elf.c',
 	'#iprogramincpp/rtl/print.c',
 	'#iprogramincpp/rtl/status.c',
+    
+    'multitouch-z2.c'
 	]) + hfs_src
 Export('plat_s5l8720_src')
 
