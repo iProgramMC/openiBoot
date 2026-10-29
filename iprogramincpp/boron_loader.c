@@ -38,6 +38,10 @@
 #include "lpb.h"
 #include "tar.h"
 
+#include "pmu.h"
+#include "gpio.h"
+#include "timer.h"
+
 #define MAX_MEMORY_REGIONS 64
 #define MAX_KERNEL_MODULES 16
 #define PAGE_SIZE 4096
@@ -48,6 +52,10 @@
 #define DEFAULT_OS_IMAGE_SIZE 8*1024*1024
 
 static uint32_t OSImageBaseAddress = 0x09000000;
+
+#if defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPOD_TOUCH_2G
+#define SUPPORT_DIRECT_INJECTION
+#endif
 
 #if defined CONFIG_IPOD_TOUCH_1G || defined CONFIG_IPHONE_2G || CONFIG_IPHONE_3G
 static char OSImageHalPath[64] = "hals5l8900.sys";
@@ -516,6 +524,17 @@ static void BlAddKernelModule(const char* ModuleName, void* ModuleData, size_t M
 	BlRemoveAreaFromMemMap(ActualAddr, ActualSize, LOADER_MEM_LOADED_PROGRAM);
 }
 
+void multitouch_on();
+
+void BlInitializeHardwareBeforeGoing()
+{
+#ifdef CONFIG_IPOD_TOUCH_2G
+	// we'll turn on the multitouch device, the kernel will upload the
+	// firmware and finish its setup.
+	multitouch_on();
+#endif
+}
+
 error_t cmd_boron_go(int argc, char** argv)
 {
 #ifdef CONFIG_IPOD_TOUCH_2G
@@ -523,6 +542,8 @@ error_t cmd_boron_go(int argc, char** argv)
 	framebuffer_setloc(0, 0);
 	framebuffer_print_force("Please wait...\n");
 #endif
+
+	BlInitializeHardwareBeforeGoing();
 	
 	void* OSImage = (void*) OSImageBaseAddress;
 	size_t OSImageSize = BlGetOSImageSize();
@@ -602,6 +623,7 @@ error_t cmd_boron_go(int argc, char** argv)
 		BlAddKernelModule(FileName, Data, FileSize);
 	}
 	
+#ifdef SUPPORT_DIRECT_INJECTION
 #ifdef CONFIG_IPOD_TOUCH_1G
 	if (BlGetOSImageSize() != DEFAULT_OS_IMAGE_SIZE)
 	{
@@ -609,7 +631,8 @@ error_t cmd_boron_go(int argc, char** argv)
 		task_sleep(2000);
 	}
 #endif
-	
+#endif
+
 	// ---- Jump To Kernel ----
 	DbgPrint("Jumping to kernel now ...  Entry point: %p", KernelEntryPoint);
 	
@@ -692,7 +715,7 @@ error_t cmd_boron_ke(int argc, char** argv)
 
 COMMAND("boronke", "[boron loader] sets the kernel file name", cmd_boron_ke);
 
-#ifdef CONFIG_IPOD_TOUCH_1G
+#ifdef SUPPORT_DIRECT_INJECTION
 
 // module to auto-boot on emulator
 static void boron_autoboot_check()
