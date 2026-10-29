@@ -264,7 +264,10 @@ int spi_txrx(int port, const uint8_t* outBuffer, int outLen, uint8_t* inBuffer, 
 
 	spi_txdata(port, outBuffer, 0, spi_info[port].txCurrentLen);
 
+	SET_REG(SPIRegs[port].txBufferLen, outLen);
 	SET_REG(SPIRegs[port].cnt, (inLen + ((1<<spi_info[port].wordSize)-1)) >> spi_info[port].wordSize);
+	spi_info[port].setupOptions |= SPISETUP_UNKN1 | SPISETUP_UNKN3 | SPISETUP_UNKN2;
+	SET_REG(SPIRegs[port].setup, spi_info[port].setupOptions);
 	SET_REG(SPIRegs[port].control, 1);
 
 	if(block) {
