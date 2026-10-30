@@ -63,8 +63,10 @@ static char OSImageHalPath[64] = "hals5l8900.sys";
 static char OSImageHalPath[64] = "hals5l8720.sys";
 #elif defined CONFIG_IPHONE_3GS
 static char OSImageHalPath[64] = "hals5l8920.sys";
+#elif defined CONFIG_IPOD_TOUCH_3G
+static char OSImageHalPath[64] = "hals5l8922.sys"; // NOTE: OpeniBoot doesn't support this
 #elif defined CONFIG_IPAD_1G || defined CONFIG_IPHONE_4 || defined CONFIG_IPOD_TOUCH_4G
-static char OSImageHalPath[64] = "hals5l8940.sys";
+static char OSImageHalPath[64] = "hals5l8930.sys";
 #else
 #error Unsupported config!
 #endif
@@ -81,6 +83,7 @@ const uintptr_t MainMemorySize = 0x20000000; // 512 MB
 
 static char OSImageKernelPath[64] = "kernel.elf";
 static char OSImageCommandLine[512] = "Root=/initrd.tar Init=/bin/init.exe InitArguments=\"--config /etc/boroninit.cfg\" NoInit=yes";
+static char OSImageCommandLineTemp[512+32];
 
 static char OpenIBootName[] = "OpeniBoot";
 static char OpenIBootVersion[] = OPENIBOOT_VERSION_STR;
@@ -222,6 +225,16 @@ void BlSetupLoaderParameterBlock(
 	KernelMinAddress &= ~0xFFF;
 	KernelMaxAddress = (KernelMaxAddress + 0xFFF) & ~0xFFF;
 	
+	// Build actual command line.
+	sprintf(
+		OSImageCommandLineTemp,
+		"Hal=%s %s",
+		OSImageHalPath,
+		OSImageCommandLine
+	);
+	
+	DbgPrint("Command line: '%s'", OSImageCommandLineTemp);
+	
 	DbgPrint("Kernel: %p-%p    OpeniBoot: %p-%p", KernelMinAddress, KernelMaxAddress, OIBMinAddress, OIBMaxAddress);
 	
 	// Set up region covering the rest of main memory.
@@ -298,7 +311,7 @@ void BlSetupLoaderParameterBlock(
 	
 	// ----- Module Setup -----
 	Lpb->ModuleInfo.Kernel.Path = OSImageKernelPath;
-	Lpb->ModuleInfo.Kernel.String = OSImageCommandLine;
+	Lpb->ModuleInfo.Kernel.String = OSImageCommandLineTemp;
 	Lpb->ModuleInfo.Kernel.Address = (void*) KernelMinAddress;
 	Lpb->ModuleInfo.Kernel.Size = KernelMaxAddress - KernelMinAddress;
 	
@@ -307,7 +320,7 @@ void BlSetupLoaderParameterBlock(
 	Lpb->ModuleInfo.Count = 0;
 	
 	// ----- Command Line Setup -----
-	Lpb->CommandLine = OSImageCommandLine;
+	Lpb->CommandLine = OSImageCommandLineTemp;
 	
 	// ----- Loader Info Setup -----
 	Lpb->LoaderInfo.Name = OpenIBootName;

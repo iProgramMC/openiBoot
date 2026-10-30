@@ -3241,7 +3241,18 @@ void h2fmi_init()
 
 	free(buff1);
 }
-MODULE_INIT(h2fmi_init);
+
+// don't init it as a boot module because it sucks
+//MODULE_INIT(h2fmi_init);
+
+static error_t cmd_h2fmi_init(int argc, char** argv)
+{
+	bufferPrintf("Initializing NAND/h2fmi...\r\n");
+	h2fmi_init();
+	return SUCCESS;
+}
+
+COMMAND("nand_init", "Initialize H2FMI NAND", cmd_h2fmi_init);
 
 static error_t cmd_nand_read(int argc, char** argv)
 {

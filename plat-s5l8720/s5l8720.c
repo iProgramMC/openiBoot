@@ -65,9 +65,9 @@ void iboot_loader_run(void) {
                 // show a welcome message after 2 seconds to skip all of the usb spam
 			bufferPrintf("===================\r\n");
 			bufferPrintf("Welcome to the 2g touch experimental openiBoot!\r\n");
-			bufferPrintf("iBoot will be automatically loaded after 10 seconds\r\n");
-			bufferPrintf("Press the power button to cancel automatic booting\r\n");
-			bufferPrintf("Press the volume up button to load ios\r\n");
+			//bufferPrintf("iBoot will be automatically loaded after 10 seconds\r\n");
+			//bufferPrintf("Press the power button to cancel automatic booting\r\n");
+			//bufferPrintf("Press the volume up button to load ios\r\n");
 			bufferPrintf("===================\r\n");
 			bufferPrintf("\r\n\r\n\r\n");
 			messageShown = TRUE;
